@@ -38,4 +38,3 @@ async def cleaner(message: types.Message):
             f"{message.from_user.first_name}, соблюдайте порядок в чате!"
         )
         await message.delete()
-

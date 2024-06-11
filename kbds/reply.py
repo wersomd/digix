@@ -105,7 +105,7 @@ CITIES_LIST_KB = get_keyboard(
     sizes=(1,)
 )
 
-cancel_kb = get_keyboard(
+CANCEL_KB = get_keyboard(
     'Отмена',
     sizes=(1, )
 )

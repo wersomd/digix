@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Specialist, ClientQuery
 from database.orm_query import orm_get_specialists_category
-from kbds.reply import MAIN_BTNS, SPECIALIST_CATEGORIES, WORK_FORMAT_KB, GENDER_KB, cancel_kb
+from kbds.reply import MAIN_BTNS, SPECIALIST_CATEGORIES, WORK_FORMAT_KB, GENDER_KB, CANCEL_KB
 from logic.pdf_reader import extract_text_from_pdf
 from logic.recomendation_ai import compare_texts
 from states.states import FindSpecialist, AddSpecialist, Vacancies
@@ -24,12 +24,15 @@ async def start_cmd(message: types.Message):
 
 @user_private_router.message(or_f(Command('vacancy'), (F.text.lower() == 'вакансии 💼')))
 async def vacancy_cmd(message: types.Message, state: FSMContext):
-    await message.answer('Какая вакансия вас интересует?', reply_markup=cancel_kb)
+    await message.answer('Какая вакансия вас интересует?', reply_markup=CANCEL_KB)
     await state.set_state(Vacancies.vacancy_query)
 
 
 @user_private_router.message(Vacancies.vacancy_query, F.text)
 async def send_vacancies(message: types.Message, state: FSMContext):
+    # if message.text.lower() == 'отмена':
+    #     await cancel_handler(message, state)
+    #     return
     await state.update_data(vacancy_query=message.text)
     await message.answer('Ищем подходящих вакансий для вас...')
 
@@ -38,8 +41,7 @@ async def send_vacancies(message: types.Message, state: FSMContext):
     vacancies = get_vacancies(query)
 
     if vacancies:
-        vacancies_length = len(vacancies)
-        print(vacancies_length)
+
         for vacancy in vacancies:
             response = (f"Название: {vacancy['title']}\n"
                         f"Компания: {vacancy['company']}\n"
@@ -60,25 +62,29 @@ async def find_specialist_cmd(message: types.Message, state: FSMContext):
 
 
 @user_private_router.message(FindSpecialist.query_spec_category,
-                             or_f((F.text.lower() == 'it'), (F.text.lower() == 'цифровой маркетинг'),
+                             or_f((F.text.lower() == 'it'),
+                                  (F.text.lower() == 'цифровой маркетинг'),
                                   (F.text.lower() == 'графический и веб-дизайн'),
                                   (F.text.lower() == 'копирайтинг и контент-создание'),
-                                  (F.text.lower() == 'виртуальные ассистенты'), (F.text.lower(
-                                  ) == 'переводы'),
-                                  (F.text.lower() == 'образование и обучение'), (F.text.lower(
-                                  ) == 'финансовые услуги'),
+                                  (F.text.lower() == 'виртуальные ассистенты'),
+                                  (F.text.lower() == 'переводы'),
+                                  (F.text.lower() == 'образование и обучение'),
+                                  (F.text.lower() == 'финансовые услуги'),
                                   (F.text.lower() == 'консультирование'),
                                   (F.text.lower() == 'it-поддержка и сетевые технологии')))
 async def find_specialist_query(message: types.Message, state: FSMContext):
     await state.update_data(spec_category=message.text)
     await message.answer(
         'Введите нужные Вам качество с описанием специалиста, чтобы наш ИИ смог найти для вас нужного специалиста: ',
-        reply_markup=cancel_kb)
+        reply_markup=CANCEL_KB)
     await state.set_state(FindSpecialist.query)
 
 
 @user_private_router.message(FindSpecialist.query, F.text)
 async def answer_for_client(message: types.Message, session: AsyncSession, state: FSMContext):
+    if message.text.lower() == 'отмена':
+        await cancel_handler(message, state)
+        return
     await state.update_data(query=message.text)
     await message.answer('Ищем подходящих специалистов для вас...')
 
@@ -110,8 +116,13 @@ async def answer_for_client(message: types.Message, session: AsyncSession, state
                     spec for spec in specialists if spec.id == spec_id)
                 await message.answer_document(
                     specialist.cv,
-                    caption=f'<strong>{specialist.specialization}</strong>\nФИО: {specialist.full_name}\nГород: {specialist.city}\nВозраст: {specialist.age}')
-
+                    caption=f"""
+                    <strong>{specialist.specialization}</strong>
+                    \nФИО: {specialist.full_name}
+                    \nГород: {specialist.city}
+                    \nВозраст: {specialist.age}
+                    """
+                )
         await state.clear()
 
 

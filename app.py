@@ -1,23 +1,23 @@
-import asyncio
 import os
+import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from telegram.constants import ParseMode
+
 from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv())
 
+from handlers.user_private import user_private_router
+from handlers.user_group import user_group_router
+from handlers.admin_private import admin_router
+from database.engine import create_db, session_maker
 from middlewares.db import DatabaseSession
 
-from database.engine import create_db, session_maker
-
-from handlers.admin_private import admin_router
-from handlers.user_group import user_group_router
-from handlers.user_private import user_private_router
-
-bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot = Bot(token=os.getenv('TOKEN'),
+          default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 bot.my_admins_list = []
 
 dp = Dispatcher()
@@ -46,7 +46,7 @@ async def main():
     print(logger)
 
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types(), skip_updates=True)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types(), skip_update=True)
 
 
 asyncio.run(main())
