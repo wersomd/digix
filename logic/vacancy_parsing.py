@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 
 def get_vacancies(query):
-    vacancy_core_url = f'https://hh.kz/search/vacancy?text={query}&area=160'
+    vacancy_core_url = f'https://hh.kz/search/vacancy?text={query}&area=40'
     print(vacancy_core_url)
 
     headers = {
@@ -12,27 +12,24 @@ def get_vacancies(query):
 
     page = requests.get(vacancy_core_url, headers=headers)
     soup = BeautifulSoup(page.text, 'html.parser')
-    print(soup.text)
 
     vacancies = soup.find_all(
         "div", class_='serp-item_link vacancy-card-container--OwxCdOj5QlSlCBZvSggS vacancy-card_simple--xFe6Vn6pgjyHcFozfcLy')
-
-    print(f'Vacanciesss: {vacancies}')
 
     results = []
     for vacancy in vacancies:
         vacancy_link_tag = vacancy.find("a", class_='bloko-link')
         vacancy_link = vacancy_link_tag['href'] if vacancy_link_tag else None
 
-        vacancy_title = vacancy_link_tag.text if vacancy_link_tag else None
+        vacancy_title = vacancy_link_tag.text if vacancy_link_tag else 'Нет информации'
 
         vacancy_city_tag = vacancy.find(
-            "span", class_='fake-magritte-primary-text--qmdoVdtVX3UWtBb3Q7Qj')
-        vacancy_city = vacancy_city_tag.text if vacancy_city_tag else None
+            "span", class_='bloko-text', attrs={'data-qa': 'vacancy-serp__vacancy-address'})
+        vacancy_city = vacancy_city_tag.text if vacancy_city_tag else 'Нет информации'
 
         company_name_tag = vacancy.find(
-            "span", class_='company-info-text--O32pGCRW0YDmp3BHuNOP')
-        company_name = company_name_tag.text if company_name_tag else None
+            "a", class_='bloko-link', attrs={'data-qa': 'vacancy-serp__vacancy-employer'})
+        company_name = company_name_tag.text if company_name_tag else 'Нет информации'
 
         results.append({
             'link': vacancy_link,
@@ -40,7 +37,5 @@ def get_vacancies(query):
             'city': vacancy_city,
             'company': company_name
         })
-
-        print(results)
 
     return results

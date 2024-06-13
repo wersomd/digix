@@ -26,11 +26,11 @@ class AddSpecialist(StatesGroup):
 
 
 class FindSpecialist(StatesGroup):
-    query_spec_category = State()
+    query_category = State()
     query = State()
 
     texts = {
-        'FindSpecialist.spec_category': 'Выберите специализацию',
+        'FindSpecialist.query_category': 'Выберите специализацию',
         'FindSpecialist.query': 'Напишите свой запрос',
     }
 

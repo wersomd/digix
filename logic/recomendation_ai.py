@@ -29,7 +29,7 @@ async def get_relevance_score(client_query: str, specialization: str, full_name:
         return 0.0
 
 
-async def compare_texts(client_query: str, specialists: List[Tuple[int, str, str, str, int, str, str]]) -> List[int]:
+async def compare_texts(client_query: str, specialists: List[Tuple[int, str, str, str, int, str, str]]) -> Tuple[List[int], List[float]]:
     relevance_scores = []
     for spec_id, specialization, full_name, city, age, gender, cv_text in specialists:
         relevance = await get_relevance_score(client_query, specialization, full_name, city, age, gender, cv_text)
@@ -41,4 +41,5 @@ async def compare_texts(client_query: str, specialists: List[Tuple[int, str, str
     relevance_scores.sort(key=lambda x: x[1], reverse=True)
 
     sorted_ids = [spec_id for spec_id, _ in relevance_scores]
-    return sorted_ids
+    sorted_scores = [score for _, score in relevance_scores]
+    return sorted_ids, sorted_scores

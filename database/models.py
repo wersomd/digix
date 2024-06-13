@@ -26,4 +26,5 @@ class ClientQuery(Base):
     __tablename__ = 'client_query'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    query: Mapped[str] = mapped_column(String(200), nullable=False)
+    query_category: Mapped[str] = mapped_column(String(100), nullable=False)
+    query: Mapped[str] = mapped_column(String(160), nullable=False)

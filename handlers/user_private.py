@@ -30,9 +30,9 @@ async def vacancy_cmd(message: types.Message, state: FSMContext):
 
 @user_private_router.message(Vacancies.vacancy_query, F.text)
 async def send_vacancies(message: types.Message, state: FSMContext):
-    # if message.text.lower() == 'отмена':
-    #     await cancel_handler(message, state)
-    #     return
+    if message.text.lower() == 'отмена':
+        await cancel_handler(message, state)
+        return
     await state.update_data(vacancy_query=message.text)
     await message.answer('Ищем подходящих вакансий для вас...')
 
@@ -42,10 +42,10 @@ async def send_vacancies(message: types.Message, state: FSMContext):
 
     if vacancies:
 
-        for vacancy in vacancies:
+        for vacancy in vacancies[:5]:
             response = (f"Название: {vacancy['title']}\n"
                         f"Компания: {vacancy['company']}\n"
-                        f"Город и зарплата: {vacancy['city']}\n"
+                        f"Город: {vacancy['city']}\n"
                         f"Ссылка: {vacancy['link']}")
             await message.answer(response, reply_markup=MAIN_BTNS)
     else:
@@ -58,10 +58,10 @@ async def send_vacancies(message: types.Message, state: FSMContext):
 async def find_specialist_cmd(message: types.Message, state: FSMContext):
     await message.answer('Какая сфера вас интересует? ',
                          reply_markup=SPECIALIST_CATEGORIES)
-    await state.set_state(FindSpecialist.query_spec_category)
+    await state.set_state(FindSpecialist.query_category)
 
 
-@user_private_router.message(FindSpecialist.query_spec_category,
+@user_private_router.message(FindSpecialist.query_category,
                              or_f((F.text.lower() == 'it'),
                                   (F.text.lower() == 'цифровой маркетинг'),
                                   (F.text.lower() == 'графический и веб-дизайн'),
@@ -73,7 +73,7 @@ async def find_specialist_cmd(message: types.Message, state: FSMContext):
                                   (F.text.lower() == 'консультирование'),
                                   (F.text.lower() == 'it-поддержка и сетевые технологии')))
 async def find_specialist_query(message: types.Message, state: FSMContext):
-    await state.update_data(spec_category=message.text)
+    await state.update_data(query_category=message.text)
     await message.answer(
         'Введите нужные Вам качество с описанием специалиста, чтобы наш ИИ смог найти для вас нужного специалиста: ',
         reply_markup=CANCEL_KB)
@@ -89,13 +89,14 @@ async def answer_for_client(message: types.Message, session: AsyncSession, state
     await message.answer('Ищем подходящих специалистов для вас...')
 
     data = await state.get_data()
-    spec_category = data.get('spec_category')
+    query_category = data.get('query_category')
     client_query = data.get('query')
 
-    specialists = await orm_get_specialists_category(session, spec_category)
+    specialists = await orm_get_specialists_category(session, query_category)
 
     query_obj = ClientQuery(
-        query=message.text,
+        query_category=query_category,
+        query=client_query
     )
 
     session.add(query_obj)
@@ -104,14 +105,14 @@ async def answer_for_client(message: types.Message, session: AsyncSession, state
     if not specialists:
         await message.answer('К сожалению, в выбранной категории нет подходящих специалистов.', reply_markup=MAIN_BTNS)
     else:
-        relevance_scores = await compare_texts(client_query, [
+        sorted_ids, sorted_scores = await compare_texts(client_query, [
             (spec.id, spec.specialization, spec.full_name, spec.city, spec.age, spec.gender, spec.cv_text) for spec in
             specialists])
-        if not relevance_scores:
+        if not sorted_ids:
             await message.answer('К сожалению, не найдено специалистов, соответствующих вашему запросу.',
                                  reply_markup=MAIN_BTNS)
         else:
-            for spec_id in relevance_scores:
+            for spec_id, relevance_score in zip(sorted_ids, sorted_scores):
                 specialist = next(
                     spec for spec in specialists if spec.id == spec_id)
                 await message.answer_document(
@@ -121,9 +122,11 @@ async def answer_for_client(message: types.Message, session: AsyncSession, state
                     \nФИО: {specialist.full_name}
                     \nГород: {specialist.city}
                     \nВозраст: {specialist.age}
+                    \n<strong>Этот кандидат вам подходят на {relevance_score * 100:.2f}%</strong>
                     """
                 )
-        await state.clear()
+
+    await state.clear()
 
 
 @user_private_router.message(StateFilter('*'), Command("отмена"))
@@ -156,11 +159,12 @@ async def cancel_handler(message: types.Message, state: FSMContext):
         previous = step
 
     await message.answer(f"Ок, вы вернулись к прошлому шагу", reply_markup=MAIN_BTNS)
+    await state.clear()
 
 
 @user_private_router.message(State(None), or_f(Command('specialist'), (F.text.lower() == 'я специалист 👨🏼‍💻')))
 async def specialist_cmd(message: types.Message, state: FSMContext):
-    await message.answer('Для добавление в базу специалистов Digix 🔍 Вам нужно пройти 3-x этапную проверку 🔐')
+    await message.answer('Для добавление в базу специалистов Digix 🔍\nВам нужно пройти 3-x этапную проверку 🔐')
     await message.answer('Выберите категорию: ', reply_markup=SPECIALIST_CATEGORIES)
     await state.set_state(AddSpecialist.spec_category)
 
@@ -168,7 +172,7 @@ async def specialist_cmd(message: types.Message, state: FSMContext):
 @user_private_router.message(AddSpecialist.spec_category)
 async def add_spec_category(message: types.Message, state: FSMContext):
     await state.update_data(spec_category=message.text)
-    await message.answer("Введите профессию: ", reply_markup=types.ReplyKeyboardRemove())
+    await message.answer("Введите профессию: ", reply_markup=CANCEL_KB)
     await state.set_state(AddSpecialist.specialization)
 
 
@@ -235,7 +239,7 @@ async def add_gender_incorrect(message: types.Message):
 @user_private_router.message(AddSpecialist.work_format, F.text)
 async def add_work_format(message: types.Message, state: FSMContext):
     await state.update_data(work_format=message.text)
-    await message.answer("Отправьте CV: ", reply_markup=types.ReplyKeyboardRemove())
+    await message.answer("Отправьте CV(PDF): ", reply_markup=types.ReplyKeyboardRemove())
     await state.set_state(AddSpecialist.cv)
 
 
