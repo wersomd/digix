@@ -8,7 +8,7 @@ class Base(DeclarativeBase):
 
 
 class Specialist(Base):
-    __tablename__ = 'specialists'
+    __tablename__ = "specialists"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     spec_category: Mapped[str] = mapped_column(String(150), nullable=False)
@@ -19,11 +19,11 @@ class Specialist(Base):
     gender: Mapped[str] = mapped_column(String(100), nullable=False)
     work_format: Mapped[str] = mapped_column(String(100), nullable=False)
     cv: Mapped[str] = mapped_column(String(150))
-    cv_text: Mapped[str] = mapped_column(String(300))
+    cv_text: Mapped[str] = mapped_column(String(2000))
 
 
 class ClientQuery(Base):
-    __tablename__ = 'client_query'
+    __tablename__ = "client_query"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     query_category: Mapped[str] = mapped_column(String(100), nullable=False)

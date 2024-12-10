@@ -22,16 +22,16 @@ ADMIN_KB = get_keyboard(
 )
 
 WORK_FORMAT_KB = get_keyboard(
-    'Full-Time',
-    'Temporary',
-    placeholder='Выберите формат работы',
+    "Full-Time",
+    "Temporary",
+    placeholder="Выберите формат работы",
     sizes=(1, 1),
 )
 
 GENDER_KB = get_keyboard(
-    'Мужской',
-    'Женский',
-    placeholder='Выберите пол',
+    "Мужской",
+    "Женский",
+    placeholder="Выберите пол",
     sizes=(1, 1)
 )
 
@@ -48,14 +48,14 @@ class AddSpecialistForAdmin(StatesGroup):
 
     specialist_for_change = None
     texts = {
-        'AddSpecialistForAdmin:spec_category': 'Выберите специализацию',
-        'AddSpecialistForAdmin:specialization': 'Напишите профессию',
-        'AddSpecialistForAdmin:full_name': 'Напишите ФИО',
-        'AddSpecialistForAdmin:city': 'Напишите город',
-        'AddSpecialistForAdmin:age': 'Напишите возраст',
-        'AddSpecialistForAdmin:gender': 'Напишите пол',
-        'AddSpecialistForAdmin:work_format': 'Напишите формат работы',
-        'AddSpecialistForAdmin:cv': 'Отправьте CV'
+        "AddSpecialistForAdmin:spec_category": "Выберите специализацию",
+        "AddSpecialistForAdmin:specialization": "Напишите профессию",
+        "AddSpecialistForAdmin:full_name": "Напишите ФИО",
+        "AddSpecialistForAdmin:city": "Напишите город",
+        "AddSpecialistForAdmin:age": "Напишите возраст",
+        "AddSpecialistForAdmin:gender": "Напишите пол",
+        "AddSpecialistForAdmin:work_format": "Напишите формат работы",
+        "AddSpecialistForAdmin:cv": "Отправьте CV"
     }
 
 
@@ -69,11 +69,11 @@ async def see_specialists(message: types.Message, session: AsyncSession):
     for specialist in await orm_get_specialists(session):
         await message.answer_document(
             specialist.cv,
-            caption=f'<strong>{specialist.specialization}\
-                </strong>\nФИО: {specialist.full_name}\nГород: {specialist.city}\nВозраст: {specialist.age}',
+            caption=f"<strong>{specialist.specialization}\
+                </strong>\nФИО: {specialist.full_name}\nГород: {specialist.city}\nВозраст: {specialist.age}",
             reply_markup=get_callback_btns(btns={
-                'Удалить специалиста': f'delete_{specialist.id}',
-                'Изменить специалиста': f'change_{specialist.id}',
+                "Удалить специалиста": f"delete_{specialist.id}",
+                "Изменить специалиста": f"change_{specialist.id}",
             })
         )
     await message.answer("Ок, вот список специалистов!")
@@ -84,8 +84,8 @@ async def delete_specialist(callback: types.CallbackQuery, session: AsyncSession
     specialist_id = callback.data.split("_")[-1]
     await orm_delete_specialist(session, int(specialist_id))
 
-    await callback.answer('Специалист удален')
-    await callback.message.answer('Специалист удален!')
+    await callback.answer("Специалист удален")
+    await callback.message.answer("Специалист удален!")
 
 
 @admin_router.callback_query(StateFilter(None), F.data.startswith("change_"))
@@ -110,8 +110,8 @@ async def add_specialist(message: types.Message, state: FSMContext):
     await state.set_state(AddSpecialistForAdmin.specialization)
 
 
-@admin_router.message(StateFilter('*'), Command("отмена"))
-@admin_router.message(StateFilter('*'), F.text.casefold() == "отмена")
+@admin_router.message(StateFilter("*"), Command("отмена"))
+@admin_router.message(StateFilter("*"), F.text.casefold() == "отмена")
 async def cancel_handler(message: types.Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state is None:
@@ -123,34 +123,34 @@ async def cancel_handler(message: types.Message, state: FSMContext) -> None:
     await message.answer("Действия отменены", reply_markup=ADMIN_KB)
 
 
-@admin_router.message(StateFilter('*'), Command("назад"))
-@admin_router.message(StateFilter('*'), F.text.casefold() == "назад")
+@admin_router.message(StateFilter("*"), Command("назад"))
+@admin_router.message(StateFilter("*"), F.text.casefold() == "назад")
 async def cancel_handler(message: types.Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state == AddSpecialistForAdmin.specialization:
-        await message.answer('Предыдущего шага нет, или введите профессию или напишите "отмена"')
+        await message.answer("Предыдущего шага нет, или введите профессию или напишите отмена")
         return
 
     previous = None
     for step in AddSpecialistForAdmin.__all_states__:
         if step.state == current_state:
             await state.set_state(previous)
-            await message.answer(f'Ок, вы вернулись к прошлому шагу \n {AddSpecialistForAdmin.texts[previous.state]}')
+            await message.answer(f"Ок, вы вернулись к прошлому шагу \n {AddSpecialistForAdmin.texts[previous.state]}")
             return
         previous = step
 
     await message.answer(f"ок, вы вернулись к прошлому шагу")
 
 
-@admin_router.message(AddSpecialistForAdmin.specialization, or_f(F.text, F.text == '.'))
+@admin_router.message(AddSpecialistForAdmin.specialization, or_f(F.text, F.text == "."))
 async def add_specialization(message: types.Message, state: FSMContext):
-    if message.text == '.':
+    if message.text == ".":
         await state.update_data(specialization=AddSpecialistForAdmin.specialist_for_change.specialization)
     else:
 
         if len(message.text) < 4:
             await message.answer(
-                'Название специализации должно быть выше 4 символа. \n Введите заново'
+                "Название специализации должно быть выше 4 символа. \n Введите заново"
             )
             return
 
@@ -164,9 +164,9 @@ async def add_specialization(message: types.Message):
     await message.answer("Вы ввели не допустимые данные, введите текст название специализации")
 
 
-@admin_router.message(AddSpecialistForAdmin.full_name, or_f(F.text, F.text == '.'))
+@admin_router.message(AddSpecialistForAdmin.full_name, or_f(F.text, F.text == "."))
 async def add_fullname(message: types.Message, state: FSMContext):
-    if message.text == '.':
+    if message.text == ".":
         await state.update_data(full_name=AddSpecialistForAdmin.specialist_for_change.full_name)
     else:
         await state.update_data(full_name=message.text)
@@ -179,9 +179,9 @@ async def add_fullname(message: types.Message):
     await message.answer("Вы ввели не допустимые данные, введите ФИО")
 
 
-@admin_router.message(AddSpecialistForAdmin.city, or_f(F.text, F.text == '.'))
+@admin_router.message(AddSpecialistForAdmin.city, or_f(F.text, F.text == "."))
 async def add_city(message: types.Message, state: FSMContext):
-    if message.text == '.':
+    if message.text == ".":
         await state.update_data(city=AddSpecialistForAdmin.specialist_for_change.city)
     else:
         await state.update_data(city=message.text)
@@ -194,15 +194,15 @@ async def add_city(message: types.Message):
     await message.answer("Вы ввели не допустимые данные, введите город")
 
 
-@admin_router.message(AddSpecialistForAdmin.age, or_f(F.text, F.text == '.'))
+@admin_router.message(AddSpecialistForAdmin.age, or_f(F.text, F.text == "."))
 async def add_age(message: types.Message, state: FSMContext):
-    if message.text == '.':
+    if message.text == ".":
         await state.update_data(age=AddSpecialistForAdmin.specialist_for_change.age)
     else:
         try:
             int(message.text)
         except ValueError:
-            await message.answer('Отправьте корректное значение!')
+            await message.answer("Отправьте корректное значение!")
             return
         await state.update_data(age=message.text)
     await message.answer("Отправьте пол: ", reply_markup=GENDER_KB)
@@ -214,9 +214,9 @@ async def add_age(message: types.Message):
     await message.answer("Вы ввели не допустимые данные, введите пол")
 
 
-@admin_router.message(AddSpecialistForAdmin.gender, or_f(F.text, F.text == '.'))
+@admin_router.message(AddSpecialistForAdmin.gender, or_f(F.text, F.text == "."))
 async def add_gender(message: types.Message, state: FSMContext):
-    if message.text == '.':
+    if message.text == ".":
         await state.update_data(gender=AddSpecialistForAdmin.specialist_for_change.gender)
     else:
         await state.update_data(gender=message.text)
@@ -229,9 +229,9 @@ async def add_gender(message: types.Message):
     await message.answer("Вы ввели не допустимые данные, введите пол")
 
 
-@admin_router.message(AddSpecialistForAdmin.work_format, or_f(F.text, F.text == '.'))
+@admin_router.message(AddSpecialistForAdmin.work_format, or_f(F.text, F.text == "."))
 async def add_work_format(message: types.Message, state: FSMContext):
-    if message.text == '.':
+    if message.text == ".":
         await state.update_data(work_format=AddSpecialistForAdmin.specialist_for_change.work_format)
     else:
         await state.update_data(work_format=message.text)
@@ -244,9 +244,9 @@ async def add_work_format(message: types.Message):
     await message.answer("Вы ввели не допустимые данные, выберите формат работы")
 
 
-@admin_router.message(AddSpecialistForAdmin.cv, or_f(F.document, F.text == '.'))
+@admin_router.message(AddSpecialistForAdmin.cv, or_f(F.document, F.text == "."))
 async def add_cv(message: types.Message, state: FSMContext, session: AsyncSession):
-    if message.text and message.text == '.':
+    if message.text and message.text == ".":
         await state.update_data(cv=AddSpecialistForAdmin.specialist_for_change.cv)
 
     else:
@@ -259,11 +259,11 @@ async def add_cv(message: types.Message, state: FSMContext, session: AsyncSessio
             await orm_update_specialist(session, AddSpecialistForAdmin.specialist_for_change.id, data)
         else:
             await orm_add_specialist(session, data)
-        await message.answer('Специалист добавлен!', reply_markup=ADMIN_KB)
+        await message.answer("Специалист добавлен!", reply_markup=ADMIN_KB)
         await state.clear()
 
     except Exception as e:
-        await message.answer(f'Ошибка: \n{str(e)}', reply_markup=ADMIN_KB)
+        await message.answer(f"Ошибка: \n{str(e)}", reply_markup=ADMIN_KB)
         await state.clear()
 
     AddSpecialistForAdmin.specialist_for_change = None

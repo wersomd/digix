@@ -34,7 +34,7 @@ def get_inline_mix_btns(
     keyboard = InlineKeyboardBuilder()
 
     for text, value in btns.items():
-        if '://' in value:
+        if "://" in value:
             keyboard.add(InlineKeyboardButton(text=text, url=value))
         else:
             keyboard.add(InlineKeyboardButton(text=text, callback_data=value))
@@ -44,7 +44,7 @@ def get_inline_mix_btns(
 
 MAIN_BTNS_INLINE = get_callback_btns(
     btns={
-        'Я ищу специалистов 🔍': '',
-        'Я специалист 👨🏼‍💻': '',
+        "Я ищу специалистов 🔍": "",
+        "Я специалист 👨🏼‍💻": "",
     }
 )

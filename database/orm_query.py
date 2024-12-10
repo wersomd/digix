@@ -7,14 +7,14 @@ from database.models import Specialist
 
 async def orm_add_specialist(session: AsyncSession, data: dict):
     obj = Specialist(
-        spec_category=data['spec_category'],
-        specialization=data['specialization'],
-        full_name=data['full_name'],
-        city=data['city'],
-        age=int(data['age']),
-        gender=data['gender'],
-        work_format=data['work_format'],
-        cv=data['cv'],
+        spec_category=data["spec_category"],
+        specialization=data["specialization"],
+        full_name=data["full_name"],
+        city=data["city"],
+        age=int(data["age"]),
+        gender=data["gender"],
+        work_format=data["work_format"],
+        cv=data["cv"],
     )
 
     session.add(obj)
@@ -42,14 +42,14 @@ async def orm_get_specialist(session: AsyncSession, specialist_id: int):
 
 async def orm_update_specialist(session: AsyncSession, specialist_id: int, data):
     query = update(Specialist).where(Specialist.id == specialist_id).values(
-        spec_category=data['spec_category'],
-        specialization=data['specialization'],
-        full_name=data['full_name'],
-        city=data['city'],
-        age=int(data['age']),
-        gender=data['gender'],
-        work_format=data['work_format'],
-        cv=data['cv'],
+        spec_category=data["spec_category"],
+        specialization=data["specialization"],
+        full_name=data["full_name"],
+        city=data["city"],
+        age=int(data["age"]),
+        gender=data["gender"],
+        work_format=data["work_format"],
+        cv=data["cv"],
     )
 
     await session.execute(query)

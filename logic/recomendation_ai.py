@@ -22,10 +22,10 @@ async def get_relevance_score(client_query: str, specialization: str, full_name:
             ]
         )
         relevance_score = float(response.choices[0].message.content.strip())
-        print(f'Relevance_score: {relevance_score}')
+        print(f"Relevance_score: {relevance_score}")
         return relevance_score
     except Exception as e:
-        print(f'Error getting relevance score: {e}')
+        print(f"Error getting relevance score: {e}")
         return 0.0
 
 
